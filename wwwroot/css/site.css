@@ -1,22 +1,106 @@
-html {
-  font-size: 14px;
+:root {
+    --rambha-bg: #0a0f1c; /* deep space */
+    --rambha-panel: #121a2a; /* console surface */
+    --rambha-accent: #00d1ff; /* cyan accent */
+    --rambha-accent-2: #9cff57; /* lime accent */
+    --rambha-text: #e8eefc;
+    --rambha-muted: #aab7d4;
+    --shadow: 0 8px 24px rgba(0,0,0,.35);
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+html, body {
+    background: linear-gradient(180deg, #090e1a 0%, #0b1330 100%);
+    color: var(--rambha-text);
+    font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji", "Segoe UI Symbol";
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+.navbar, .footer {
+    background: rgba(10,15,28,.65) !important;
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(255,255,255,.06);
 }
 
-html {
-  position: relative;
-  min-height: 100%;
+.hero {
+    padding: 40px 0 24px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
 }
 
-body {
-  margin-bottom: 60px;
+    .hero .title {
+        font-weight: 700;
+        letter-spacing: .2px;
+        font-size: 2.1rem;
+    }
+
+    .hero .subtitle {
+        color: var(--rambha-muted);
+    }
+
+.card {
+    background: var(--rambha-panel);
+    border: 1px solid rgba(255,255,255,.06);
+    box-shadow: var(--shadow);
+    color: var(--rambha-text);
+}
+
+.btn-accent {
+    background: var(--rambha-accent);
+    border: none;
+    color: #001018;
+    font-weight: 600;
+}
+
+    .btn-accent:hover {
+        filter: brightness(0.95);
+    }
+
+.form-label {
+    color: var(--rambha-muted);
+}
+
+.metric {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px dashed rgba(255,255,255,.12);
+}
+
+    .metric .k {
+        font-size: .8rem;
+        color: var(--rambha-muted);
+    }
+
+    .metric .v {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    .metric.cyan {
+        border-color: rgba(0,209,255,.35);
+    }
+
+    .metric.lime {
+        border-color: rgba(156,255,87,.35);
+    }
+
+    .metric.mag {
+        border-color: rgba(255,117,241,.35);
+    }
+
+    .metric.amb {
+        border-color: rgba(255,196,87,.35);
+    }
+
+.plot-card {
+    min-height: 520px;
+}
+
+hr.soft {
+    border-color: rgba(255,255,255,.08);
+    opacity: .6;
+}
+
+small.note {
+    color: var(--rambha-muted);
 }

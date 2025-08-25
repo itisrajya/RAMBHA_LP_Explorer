@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RAMBHA_LP_Explorer.Models;
 using RAMBHA_LP_Explorer.Services;
+using System.Text.Json;
 
 namespace RAMBHA_LP_Explorer.Pages
 {
@@ -24,9 +25,16 @@ namespace RAMBHA_LP_Explorer.Pages
         public AnalysisResult? Analysis { get; private set; }
         public List<IvPoint> Points { get; private set; } = new();
 
+        // >>> Added: JSON for the chart <<<
+        public string PointsJson { get; private set; } = "[]";   // voltages
+        public string CurrentsJson { get; private set; } = "[]"; // currents
+
         public void OnGet()
         {
             InfoMessage = "Upload a CSV with two columns: V (volts), I (amps). Headers allowed.";
+            // Keep chart bindings valid even before upload
+            PointsJson = "[]";
+            CurrentsJson = "[]";
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -34,6 +42,8 @@ namespace RAMBHA_LP_Explorer.Pages
             if (Upload == null || Upload.Length == 0)
             {
                 ErrorMessage = "Please choose a CSV file.";
+                PointsJson = "[]";
+                CurrentsJson = "[]";
                 return Page();
             }
 
@@ -53,9 +63,16 @@ namespace RAMBHA_LP_Explorer.Pages
                 if (Points.Count < 5)
                 {
                     ErrorMessage = $"Only {Points.Count} valid points found. Need at least 5.";
+                    PointsJson = JsonSerializer.Serialize(Array.Empty<double>());
+                    CurrentsJson = JsonSerializer.Serialize(Array.Empty<double>());
                     return Page();
                 }
 
+                // >>> Added: serialize X/Y arrays for the chart <<<
+                PointsJson = JsonSerializer.Serialize(Points.Select(p => p.V));
+                CurrentsJson = JsonSerializer.Serialize(Points.Select(p => p.I));
+
+                // Run analysis
                 Analysis = _analyzer.Analyze(Points);
                 if (Analysis?.PointCount < 5)
                 {
@@ -69,6 +86,8 @@ namespace RAMBHA_LP_Explorer.Pages
             catch (Exception ex)
             {
                 ErrorMessage = "Failed to parse or analyze file: " + ex.Message;
+                PointsJson = "[]";
+                CurrentsJson = "[]";
                 return Page();
             }
         }
@@ -133,7 +152,6 @@ namespace RAMBHA_LP_Explorer.Pages
 
         private static bool TryParseDouble(string s, out double value)
         {
-            // Handle stray unicode spaces and typical CSV quirks
             s = (s ?? string.Empty).Trim();
             return double.TryParse(
                 s,

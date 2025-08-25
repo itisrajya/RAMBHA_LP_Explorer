@@ -1,128 +1,160 @@
 ﻿@page
-@model RAMBHA_LP_Explorer.Pages.IndexModel
-@using System.Globalization
+@model IndexModel
 @{
     ViewData["Title"] = "RAMBHA-LP Explorer";
 }
 
-@* <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div> *@
-
-<div class="container" style="max-width:900px;margin:2rem auto;">
-    <h1>RAMBHA-LP Explorer</h1>
-    <p class="text-muted">Upload a CSV with two columns: <code>V</code> (volts), <code>I</code> (amps). Headers are okay.</p>
-
-    <form method="post" enctype="multipart/form-data" style="margin:1rem 0;">
-        <input type="file" name="Upload" />
-        <button type="submit">Analyze</button>
-    </form>
-
-    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
-    {
-        <div style="padding:0.75rem 1rem;border:1px solid #f5c2c7;background:#f8d7da;color:#842029;border-radius:8px;">
-            <strong>Error:</strong> @Model.ErrorMessage
+<section class="hero">
+    <div class="container-lg">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <div class="title">RAMBHA-LP Explorer</div>
+                <div class="subtitle">Quick-look analysis of Langmuir probe I-V sweeps (Vf, Vp, Te, I<sub>e,sat</sub>)</div>
+            </div>
+            <div class="text-end">
+                <span class="badge rounded-pill text-bg-dark border border-secondary-subtle">Beta</span>
+            </div>
         </div>
-    }
-    else if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
-    {
-        <div style="padding:0.75rem 1rem;border:1px solid #b6d4fe;background:#cfe2ff;color:#084298;border-radius:8px;">
-            @Model.InfoMessage
+    </div>
+</section>
+
+<div class="container-lg mt-4">
+    <div class="row g-4">
+        <!-- Left: Controls -->
+        <div class="col-12 col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Load & Analyze</h5>
+
+                    <form method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label">CSV file (V, I)</label>
+                            <input asp-for="Upload" type="file" class="form-control" />
+                            <div class="form-text">Two columns: v (volts), i (amps). Headers are ok.</div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-accent" asp-page-handler="Analyze">Analyze</button>
+                            <a class="btn btn-outline-light" asp-page-handler="Sample">Load sample</a>
+                        </div>
+                    </form>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
+                    {
+                        <div class="alert alert-info mt-3" role="alert">@Model.InfoMessage</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger mt-3" role="alert">@Model.ErrorMessage</div>
+                    }
+
+                    <hr class="soft my-4" />
+
+                    <div class="small">
+                        <strong>Tips</strong>
+                        <ul class="mt-2 mb-0">
+                            <li>Use consistent sweep direction (low→high V) for nicest plots.</li>
+                            <li>Positive I assumed as electron current in retarding region.</li>
+                            <li>Te is from ln(I) fit between Vf and Vp (trimmed 10%).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted mb-3">Results</h6>
+
+                    <div class="d-grid gap-3">
+                        <div class="metric cyan">
+                            <div class="flex-grow-1">
+                                <div class="k">Floating potential (Vf)</div>
+                                <div class="v">@Model.Analysis?.FloatingPotential_Vf?.ToString("0.###") ?? "—"</div>
+                            </div>
+                        </div>
+                        <div class="metric mag">
+                            <div class="flex-grow-1">
+                                <div class="k">Plasma potential (Vp)</div>
+                                <div class="v">@Model.Analysis?.PlasmaPotential_Vp?.ToString("0.###") ?? "—"</div>
+                            </div>
+                        </div>
+                        <div class="metric amb">
+                            <div class="flex-grow-1">
+                                <div class="k">Electron temperature (Te, eV)</div>
+                                <div class="v">@Model.Analysis?.ElectronTemperature_eV?.ToString("0.###") ?? "—"</div>
+                            </div>
+                        </div>
+                        <div class="metric lime">
+                            <div class="flex-grow-1">
+                                <div class="k">Electron saturation current (A)</div>
+                                <div class="v">@Model.Analysis?.ElectronSaturationCurrent_Amps?.ToString("0.###E+0") ?? "—"</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <small class="note">
+                            Quick-look method: zero-crossing Vf, max dI/dV for Vp,
+                            ln(I) vs V slope for Te, high-V tail average for I<sub>e,sat</sub>.
+                        </small>
+                    </div>
+                </div>
+            </div>
         </div>
-    }
 
-    @if (Model.Analysis is not null && Model.Points.Count > 0)
-    {
-        
-        <h2 style="margin-top:1.5rem;">I–V Curve</h2>
-        <div id="plot" style="width:100%;height:460px;border:1px solid #eee;border-radius:8px;"></div>
-
-        <h2>Results</h2>
-        <table style="border-collapse:collapse;">
-            <tbody>
-                <tr>
-                    <td style="padding:6px 10px;border:1px solid #ddd;">Floating potential (V<sub>f</sub>)</td>
-                    <td style="padding:6px 10px;border:1px solid #ddd;">
-                        @(Model.Analysis.FloatingPotential_Vf?.ToString("F3", CultureInfo.InvariantCulture) ?? "—")
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding:6px 10px;border:1px solid #ddd;">Plasma potential (V<sub>p</sub>)</td>
-                    <td style="padding:6px 10px;border:1px solid #ddd;">
-                        @(Model.Analysis.PlasmaPotential_Vp?.ToString("F3", CultureInfo.InvariantCulture) ?? "—")
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding:6px 10px;border:1px solid #ddd;">Electron temperature (T<sub>e</sub>, eV)</td>
-                    <td style="padding:6px 10px;border:1px solid #ddd;">
-                        @(Model.Analysis.ElectronTemperature_eV?.ToString("F3", CultureInfo.InvariantCulture) ?? "—")
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding:6px 10px;border:1px solid #ddd;">Electron saturation current (A)</td>
-                    <td style="padding:6px 10px;border:1px solid #ddd;">
-                        @(Model.Analysis.ElectronSaturationCurrent_Amps?.ToString("3.3E+0", CultureInfo.InvariantCulture) ?? "—")
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
-        @* If you prefer local file, put it in wwwroot and replace the line above with:
-    <script src="/plotly-2.32.0.min.js"></script> *@
-
-        <script>
-            (function() {
-                const xs = [@string.Join(",", Model.Points.Select(p => p.V.ToString(CultureInfo.InvariantCulture)))];
-                const ys = [@string.Join(",", Model.Points.Select(p => p.I.ToString(CultureInfo.InvariantCulture)))];
-
-                const data = [{
-                    x: xs,
-                    y: ys,
-                    mode: 'lines+markers',
-                    name: 'I(V)'
-                }];
-
-                const shapes = [];
-
-            @* Optional markers for Vf and Vp *@
-            @if (Model.Analysis?.FloatingPotential_Vf is double vf)
-            {
-                <text>
-                        shapes.push({
-                            type: 'line',
-                            x0: @vf.ToString("G17", CultureInfo.InvariantCulture), y0: Math.min(...ys),
-                            x1: @vf.ToString("G17", CultureInfo.InvariantCulture), y1: Math.max(...ys),
-                            line: { dash: 'dot' }
-                        });
-                </text>
-            }
-            @if (Model.Analysis?.PlasmaPotential_Vp is double vp)
-            {
-                <text>
-                        shapes.push({
-                            type: 'line',
-                            x0: @vp.ToString("G17", CultureInfo.InvariantCulture), y0: Math.min(...ys),
-                            x1: @vp.ToString("G17", CultureInfo.InvariantCulture), y1: Math.max(...ys),
-                            line: { dash: 'dash' }
-                        });
-                </text>
-            }
-
-                const layout = {
-                    xaxis: { title: 'Voltage (V)' },
-                    yaxis: { title: 'Current (A)', rangemode: 'tozero' },
-                    margin: { l: 60, r: 20, t: 10, b: 50 },
-                    shapes
-                };
-
-                Plotly.newPlot('plot', data, layout, {responsive:true});
-            })();
-        </script>
-
-        <p style="margin-top:1rem;font-size:0.9rem;color:#555;">
-            <em>@Model.Analysis?.Notes</em>
-        </p>
-    }
+        <!-- Right: Plot -->
+        <div class="col-12 col-lg-8">
+            <div class="card plot-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0">I–V Curve</h5>
+                        <div class="text-muted small">
+                            @if (Model.Points?.Count > 0)
+                            {
+                                <span>Loaded <strong>@Model.Points.Count</strong> points</span>
+                                ;
+                            }
+                        </div>
+                    </div>
+                    <div id="chart" class="mt-3" style="height:460px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <script>
+        const xs = @Html.Raw(Model.PointsJson ?? "[]");
+        const ys = @Html.Raw(Model.CurrentsJson ?? "[]");
+
+        const vf = @Html.Raw(Model.Analysis?.FloatingPotential_Vf?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "null");
+        const vp = @Html.Raw(Model.Analysis?.PlasmaPotential_Vp?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "null");
+
+        const trace = {
+            x: xs, y: ys, mode: 'lines+markers',
+            line: { width: 2 }, marker: { size: 6 }
+        };
+
+        const shapes = [];
+        if (vf !== null) shapes.push({
+            type: 'line', x0: vf, x1: vf, y0: Math.min(...ys, 0), y1: Math.max(...ys, 0),
+            line: { dash: 'dot', width: 2 }
+        });
+        if (vp !== null) shapes.push({
+            type: 'line', x0: vp, x1: vp, y0: Math.min(...ys, 0), y1: Math.max(...ys, 0),
+            line: { dash: 'dash', width: 2 }
+        });
+
+        Plotly.newPlot('chart', [trace], {
+            margin: { l: 60, r: 20, t: 10, b: 45 },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            xaxis: { title: 'Voltage (V)', zeroline: false, gridcolor: 'rgba(255,255,255,.08)', color: '#e8eefc' },
+            yaxis: { title: 'Current (A)', zeroline: true, zerolinecolor: 'rgba(255,255,255,.25)', gridcolor: 'rgba(255,255,255,.08)', color: '#e8eefc' },
+            shapes
+        }, { responsive: true });
+    </script>
+}
