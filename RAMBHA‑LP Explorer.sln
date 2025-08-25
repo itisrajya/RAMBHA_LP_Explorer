@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35122.118
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RAMBHA‑LP Explorer", "RAMBHA‑LP Explorer.csproj", "{2B2BAC52-50EB-4606-BAFA-F4E335A17C66}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2B2BAC52-50EB-4606-BAFA-F4E335A17C66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B2BAC52-50EB-4606-BAFA-F4E335A17C66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B2BAC52-50EB-4606-BAFA-F4E335A17C66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B2BAC52-50EB-4606-BAFA-F4E335A17C66}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {393C7664-8EF6-42AA-B004-1C798B5716EE}
+	EndGlobalSection
+EndGlobal

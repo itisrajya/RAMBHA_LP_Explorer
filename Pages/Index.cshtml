@@ -1,0 +1,128 @@
+﻿@page
+@model RAMBHA_LP_Explorer.Pages.IndexModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "RAMBHA-LP Explorer";
+}
+
+@* <div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div> *@
+
+<div class="container" style="max-width:900px;margin:2rem auto;">
+    <h1>RAMBHA-LP Explorer</h1>
+    <p class="text-muted">Upload a CSV with two columns: <code>V</code> (volts), <code>I</code> (amps). Headers are okay.</p>
+
+    <form method="post" enctype="multipart/form-data" style="margin:1rem 0;">
+        <input type="file" name="Upload" />
+        <button type="submit">Analyze</button>
+    </form>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div style="padding:0.75rem 1rem;border:1px solid #f5c2c7;background:#f8d7da;color:#842029;border-radius:8px;">
+            <strong>Error:</strong> @Model.ErrorMessage
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
+    {
+        <div style="padding:0.75rem 1rem;border:1px solid #b6d4fe;background:#cfe2ff;color:#084298;border-radius:8px;">
+            @Model.InfoMessage
+        </div>
+    }
+
+    @if (Model.Analysis is not null && Model.Points.Count > 0)
+    {
+        
+        <h2 style="margin-top:1.5rem;">I–V Curve</h2>
+        <div id="plot" style="width:100%;height:460px;border:1px solid #eee;border-radius:8px;"></div>
+
+        <h2>Results</h2>
+        <table style="border-collapse:collapse;">
+            <tbody>
+                <tr>
+                    <td style="padding:6px 10px;border:1px solid #ddd;">Floating potential (V<sub>f</sub>)</td>
+                    <td style="padding:6px 10px;border:1px solid #ddd;">
+                        @(Model.Analysis.FloatingPotential_Vf?.ToString("F3", CultureInfo.InvariantCulture) ?? "—")
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:6px 10px;border:1px solid #ddd;">Plasma potential (V<sub>p</sub>)</td>
+                    <td style="padding:6px 10px;border:1px solid #ddd;">
+                        @(Model.Analysis.PlasmaPotential_Vp?.ToString("F3", CultureInfo.InvariantCulture) ?? "—")
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:6px 10px;border:1px solid #ddd;">Electron temperature (T<sub>e</sub>, eV)</td>
+                    <td style="padding:6px 10px;border:1px solid #ddd;">
+                        @(Model.Analysis.ElectronTemperature_eV?.ToString("F3", CultureInfo.InvariantCulture) ?? "—")
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:6px 10px;border:1px solid #ddd;">Electron saturation current (A)</td>
+                    <td style="padding:6px 10px;border:1px solid #ddd;">
+                        @(Model.Analysis.ElectronSaturationCurrent_Amps?.ToString("3.3E+0", CultureInfo.InvariantCulture) ?? "—")
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+        @* If you prefer local file, put it in wwwroot and replace the line above with:
+    <script src="/plotly-2.32.0.min.js"></script> *@
+
+        <script>
+            (function() {
+                const xs = [@string.Join(",", Model.Points.Select(p => p.V.ToString(CultureInfo.InvariantCulture)))];
+                const ys = [@string.Join(",", Model.Points.Select(p => p.I.ToString(CultureInfo.InvariantCulture)))];
+
+                const data = [{
+                    x: xs,
+                    y: ys,
+                    mode: 'lines+markers',
+                    name: 'I(V)'
+                }];
+
+                const shapes = [];
+
+            @* Optional markers for Vf and Vp *@
+            @if (Model.Analysis?.FloatingPotential_Vf is double vf)
+            {
+                <text>
+                        shapes.push({
+                            type: 'line',
+                            x0: @vf.ToString("G17", CultureInfo.InvariantCulture), y0: Math.min(...ys),
+                            x1: @vf.ToString("G17", CultureInfo.InvariantCulture), y1: Math.max(...ys),
+                            line: { dash: 'dot' }
+                        });
+                </text>
+            }
+            @if (Model.Analysis?.PlasmaPotential_Vp is double vp)
+            {
+                <text>
+                        shapes.push({
+                            type: 'line',
+                            x0: @vp.ToString("G17", CultureInfo.InvariantCulture), y0: Math.min(...ys),
+                            x1: @vp.ToString("G17", CultureInfo.InvariantCulture), y1: Math.max(...ys),
+                            line: { dash: 'dash' }
+                        });
+                </text>
+            }
+
+                const layout = {
+                    xaxis: { title: 'Voltage (V)' },
+                    yaxis: { title: 'Current (A)', rangemode: 'tozero' },
+                    margin: { l: 60, r: 20, t: 10, b: 50 },
+                    shapes
+                };
+
+                Plotly.newPlot('plot', data, layout, {responsive:true});
+            })();
+        </script>
+
+        <p style="margin-top:1rem;font-size:0.9rem;color:#555;">
+            <em>@Model.Analysis?.Notes</em>
+        </p>
+    }
+</div>
