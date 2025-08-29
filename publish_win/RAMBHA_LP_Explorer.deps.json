@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "RAMBHA_LP_Explorer/1.0.0": {
+        "runtime": {
+          "RAMBHA_LP_Explorer.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "RAMBHA_LP_Explorer/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
